@@ -1,5 +1,5 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-(function() {
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+(function () {
     "use strict";
     var config = require("../../config.js");
     var parseArgs = require("minimist");
@@ -17,23 +17,29 @@
                 args.files = args.files || args.file;
                 args.host = args.host || args.h;
                 args.debug = args.debug || args.d;
-                if (args.files)
+                if (args.files) {
                     files = args.files.split(",");
-                if (args.host)
+                }
+                if (args.host) {
                     host = args.host.toLowerCase();
-                if (args.debug)
+                }
+                if (args.debug) {
                     debug = args.debug;
+                }
 
                 // Build up command string
-                var command = "%_NTTREE%/Corsica/other.2.1.debug/Tools/WebUnit/WebUnit.exe";
-                for (var i = 0, l = files.length; i < l; ++i)
+                var command = "%_NTTREE%/Corsica/other." + config.version + ".debug/Tools/WebUnit/WebUnit.exe";
+                for (var i = 0, l = files.length; i < l; ++i) {
                     command +=  " /s:%_NTTREE%/Corsica/other." + config.version + ".debug/Tests/UnitTests/" + files[i];
-                if (debug)
+                }
+                if (debug) {
                     command += " /debug";
-                if (host === "vs")
+                }
+                if (host === "vs") {
                     command += " /vs";
-                else
+                } else {
                     command += " /host:" + host;
+                }
                 command += " @res.txt";
                 return command;
             },

@@ -1,108 +1,60 @@
-﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
 .Colors(@theme) {
-    .win-toggleswitch {
-        background-color: transparent;
+    .colorDefinitions(@theme);
 
-        .mixin(dark) {
-            .win-switch {
-                background-color: transparent;
+    // Rest styles
+    .win-toggleswitch-header {
+        color: @baseHigh;
+    }
+    .win-toggleswitch-value {
+        color: @baseHigh;
+    }
+    .win-toggleswitch-thumb {
+        background-color: @baseMediumHigh;
+    }
+    .win-toggleswitch-on .win-toggleswitch-track {
+        border-color: @accentColor;
+    }
+    .win-toggleswitch-off .win-toggleswitch-track {
+        border-color: @baseMediumHigh;
+    }
 
-                &:disabled::-ms-track {
-                    border-color: rgba(255, 255, 255, 0.2);
-                }
-                &:disabled::-ms-fill-upper, &:disabled::-ms-fill-lower {
-                    background-color: rgba(255, 255, 255, 0.12);
-                }
-                &:enabled:hover::-ms-fill-upper {
-                    background-color: rgba(255, 255, 255, 0.29);
-                }
-                &:enabled:active::-ms-fill-upper {
-                    background-color: rgba(255, 255, 255, 0.35);
-                }
-            }
+    // Active styles
+    .win-toggleswitch-pressed .win-toggleswitch-track {
+        border-color: @baseMid;
+    }
+    .win-toggleswitch-pressed .win-toggleswitch-thumb {
+        background-color: @baseMid;
+    }
 
-            .win-switch::-ms-track {
-                background-color: transparent;
-                border-color: rgba(255, 255, 255, 0.35);
-            }
-
-            .win-switch::-ms-fill-upper {
-                background-color: rgba(255, 255, 255, 0.26);
-            }
-
-            .win-title {
-                color: rgb(255, 255, 255);
-            }
-
-            .win-title.win-disabled {
-                color: rgba(255, 255, 255, 0.4);
-            }
-
-            .win-label {
-                color: rgb(255, 255, 255);
-
-                &.win-disabled {
-                    color: rgba(255, 255, 255, 0.4);
-                }
-            }
-        }
-
-        .mixin(light) {
-            .win-switch {
-                background-color: transparent;
-
-                &:disabled::-ms-track {
-                    border-color: rgba(0, 0, 0, 0.2);
-                }
-                &:disabled::-ms-fill-upper, &:disabled::-ms-fill-lower {
-                    background-color: rgba(0, 0, 0, 0.12);
-                }
-                &:enabled:hover::-ms-fill-upper {
-                    background-color: rgba(0, 0, 0, 0.29);
-                }
-                &:enabled:active::-ms-fill-upper {
-                    background-color: rgba(0, 0, 0, 0.35);
-                }
-            }
-
-            .win-switch::-ms-track {
-                background-color: transparent;
-                border-color: rgba(0, 0, 0, 0.35);
-            }
-
-            .win-switch::-ms-fill-upper {
-                background-color: rgba(0, 0, 0, 0.26);
-            }
-
-            .win-title {
-                color: rgb(0, 0, 0);
-            }
-
-            .win-title.win-disabled {
-                color: rgba(0, 0, 0, 0.4);
-            }
-
-            .win-label {
-                color: rgb(0, 0, 0);
-
-                &.win-disabled {
-                    color: rgba(0, 0, 0, 0.4);
-                }
-            }
-        }
-
-        .mixin(@theme);
+    // Disabled styles
+    .win-toggleswitch-disabled .win-toggleswitch-track {
+        border-color: @baseLow;
+    }
+    .win-toggleswitch-disabled .win-toggleswitch-thumb {
+        background-color: @baseLow;
+    }
+    .win-toggleswitch-disabled .win-toggleswitch-header,
+    .win-toggleswitch-disabled .win-toggleswitch-value {
+        color: @baseLow;
     }
 }
 
-@media (-ms-high-contrast) {
-    .win-toggleswitch {
-        .win-switch:disabled::-ms-fill-lower {
-            background-color: GrayText;
-        }
+.ColorsHover(@theme) {
+    .colorDefinitions(@theme);
 
-        .win-switch::-ms-thumb {
-            height: 17px;
+    // Hover styles
+    .win-toggleswitch-off:not(.win-toggleswitch-disabled):not(.win-toggleswitch-pressed) {
+        .win-toggleswitch-clickregion:hover .win-toggleswitch-track {
+            border-color: @baseHigh;
         }
     }
+
+    .win-toggleswitch:not(.win-toggleswitch-disabled):not(.win-toggleswitch-pressed) {
+        .win-toggleswitch-clickregion:hover .win-toggleswitch-thumb {
+            background-color: @baseHigh;
+        }
+    }
+
 }

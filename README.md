@@ -2,7 +2,7 @@ Windows Library for JavaScript (WinJS)
 =====
  [![Build Status](https://travis-ci.org/winjs/winjs.svg?branch=master)](https://travis-ci.org/winjs/winjs)
  
-This project is actively developed by the WinJS developers working for Microsoft Open Technologies, in collaboration with the community of open source developers. Together we are dedicated to creating the best possible solution for HTML/JS/CSS application development.
+This project is actively developed by the WinJS developers working for Microsoft Corporation, in collaboration with the community of open source developers. Together we are dedicated to creating the best possible solution for HTML/JS/CSS application development.
 
 WinJS is a set of JavaScript toolkits that allow developers to build applications using HTML/JS/CSS technology forged with the following principles in mind:
 
@@ -49,6 +49,14 @@ Run the following and the WinJS JavaScript and CSS files will be put in the `bin
 grunt
 ```
 
+> **Note:** You may need to use sudo (for OSX, *nix, BSD etc) or run your command shell as Administrator (for Windows) to install Grunt globally.
+
+# Tests status
+Refer to http://try.buildwinjs.com/#status for the current status of the unit tests and the list of known issues.
+
 # Try WinJS
 Check out our online playground http://try.buildwinjs.com
 
+# Follow Us
+Twitter https://twitter.com/BuildWinJS  
+Facebook https://www.facebook.com/buildwinjs

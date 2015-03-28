@@ -1,6 +1,26 @@
-﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+@import "base.less";
+@import "mixins.less";
+
 .win-navbar {
-    min-height: 60px;
+    &.win-navbar-showing,
+    &.win-navbar-shown,
+    &.win-navbar-hiding {
+        min-height: 60px;
+    }
+
+    .win-navbar-invokebutton {
+        width: 32px;
+        min-height: 0;
+        height: 24px;
+        bottom: 0;
+
+        .win-navbar-ellipsis {
+            width: 32px;
+            top: 5px;
+        }
+    }
 }
 
 .win-navbarcontainer {
@@ -20,44 +40,51 @@
     display: inline-block;
     width: 40px;
     height: 4px;
-    margin: 5px 2.5px 11px 2.5px;
+    margin: 4px 2px 16px 2px;
+}
+.win-navbarcontainer-horizontal .win-navbarcontainer-viewport::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 .win-navbarcontainer-horizontal .win-navbarcontainer-viewport {
-    padding: 15px 0;
+    padding: 20px 0;
     overflow-x: auto;
     overflow-y: hidden;
+    overflow: -moz-scrollbars-none;
     -ms-scroll-snap-type: mandatory;
     -ms-scroll-snap-points-x: snapInterval(0%, 100%);
     -ms-overflow-style: none;
     touch-action: pan-x;
 }
 .win-navbarcontainer-vertical .win-navbarcontainer-viewport {
-    padding: 10px 0;
     overflow-x: hidden;
     overflow-y: auto;
-    max-height: 250px;
+    max-height: 216px;
     -ms-overflow-style: -ms-autohiding-scrollbar;
     touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
 }
 .win-navbarcontainer-horizontal .win-navbarcontainer-surface {
-    display: -ms-grid;
-    -ms-grid-columns: auto;
-    -ms-grid-rows: auto;
+    #flex > .display-flex();
+    #flex > .flex-flow(column; wrap);
+    #flex > .align-content(flex-start);
+}
+.win-navbarcontainer-vertical .win-navbarcontainer-surface {
+    padding: 12px 0;
 }
 .win-navbarcontainer-navarrow {
     position: absolute;
-    top: 0;
-    display: -webkit-flex;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-family: "Segoe UI Symbol", "Symbols";
+    z-index: 2;
+    top: 24px;
+    #flex > .display-flex();
+    #flex > .flex-direction(column);
+    #flex > .align-items(center);
+    #flex > .justify-content(center);
+    font-family: "Segoe MDL2 Assets", "Symbols";
 
-    height: ~"calc(100% - 40px)";
-    width: 17px;
-    margin: 20px 0;
-    font-size: 16pt;
+    height: ~"calc(100% - 48px)";
+    width: 20px;
+    font-size: 16px;
     overflow: hidden;
 }
 .win-navbarcontainer-vertical .win-navbarcontainer-navarrow {
@@ -65,14 +92,14 @@
 }
 .win-navbarcontainer-navleft {
     left: 0;
-    margin-right: 8px;
+    margin-right: 2px;
 }
 .win-navbarcontainer-navleft::before {
     content: '\E0E2';
 }
 .win-navbarcontainer-navright {
     right: 0;
-    margin-left: 8px;
+    margin-left: 2px;
 }
 .win-navbarcontainer-navright::before {
     content: '\E0E3';
@@ -82,82 +109,85 @@
     NavBarCommand
 */
 .win-navbarcommand {
-    display: -ms-grid;
-    -ms-grid-columns: 1fr auto;
-    -ms-grid-rows: 1fr;
+    #flex > .display-flex();
+    #flex > .flex(none);
+    touch-action: manipulation;
 }
 .win-navbarcontainer-horizontal .win-navbarcommand {
-    margin: 5px;
-    width: 210px;
+    margin: 4px;
+    width: 192px;
 }
 .win-navbarcontainer-vertical .win-navbarcommand {
-    margin: 10px 30px;
+    margin: 4px 24px;
 }
 .win-navbarcommand-button {
-    -ms-grid-column: 1;
-    -ms-grid-row: 1;
-    width: 100%;
+    #flex > .flex(@grow: 1; @shrink: 1; @basis: 0%);
     position: relative;
 }
 .win-navbarcommand-button-content {
     position: relative;
-    padding: 5px 10px;
-    display: -ms-grid;
-    -ms-grid-columns: auto 1fr;
-    -ms-grid-rows: auto;
+    height: 48px; // Keep in sync with splitbutton's line-height
+    padding-left: 16px;
+    padding-right: 16px;
+    #flex > .display-flex();
 }
 .win-navbarcommand-button:focus {
     z-index: 1;
     outline: none;
 }
 .win-navbarcommand-icon {
-    -ms-grid-column: 1;
-    -ms-grid-row: 1;
-    font-family: "Segoe UI Symbol", "Symbols";
-    height: 40px;
-    width: 40px;
-    font-size: 20pt;
+    font-family: "Segoe MDL2 Assets", "Symbols";
+    height: 16px;
+    width: 16px;
+    font-size: 16px;
     margin-left: 0;
-    margin-right: 10px;
-    display: -webkit-flex;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    margin-right: 16px;
+    margin-top: 14px; /* Center icon vertically */
+    line-height: 1; /* Ensure icon is exactly font-size */
+    #flex > .flex(none);
 }
-.win-navbarcommand-icon:-ms-lang(@{rtl}) {
-    margin-right: 0;
-    margin-left: 10px;
+.win-navbarcommand-icon {
+    .RTL({
+        margin-right: 0;
+        margin-left: 16px;
+    });
 }
 .win-navbarcommand-label {
-    -ms-grid-column: 2;
-    -ms-grid-row: 1;
+    #flex > .flex(@grow: 1; @shrink: 1; @basis: 0%);
     overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 11pt;
-    margin: 10px 0;
+    .win-type-body();
+    margin-top: 13px;
+    margin-bottom: 15px;
 }
 .win-navbarcommand-splitbutton {
-    -ms-grid-column: 2;
-    -ms-grid-row: 1;
-    display: -webkit-flex;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    width: 40px;
-    font-family: "Segoe UI Symbol", "Symbols";
-    font-size: 11pt;
+    #flex > .flex(none);
+    width: 48px;
+    font-family: "Segoe MDL2 Assets", "Symbols";
+    font-size: 16px;
     margin-right: 0;
     margin-left: 2px;
     position: relative;
 }
-.win-navbarcommand-splitbutton:-ms-lang(@{rtl}) {
-    margin-left: 0;
-    margin-right: 2px;
+.win-navbarcommand-splitbutton {
+    .RTL({
+        margin-left: 0;
+        margin-right: 2px;
+    });
 }
 .win-navbarcommand-splitbutton::before {
     content: '\E019';
+    pointer-events: none;
+    position: absolute;
+    box-sizing: border-box;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    text-align: center;
+
+    line-height: 46px; // Keep in sync with splitbutton-content's height. Minus 2px for border.
+    border: 1px dotted transparent; // Color is added for keyboard focus in colors styles
 }
 .win-navbarcommand-splitbutton.win-navbarcommand-splitbutton-opened::before {
     content: '\E018';

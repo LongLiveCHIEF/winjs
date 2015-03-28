@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
 (function () {
     "use strict";
 
@@ -8,6 +8,10 @@
         tests: {
             options: {
                 patterns: [
+                    {
+                        match: /\$\(TargetFramework\)/g,
+                        replacement: config.desktopFramework
+                    }
                 ],
             },
             files: [
@@ -21,10 +25,6 @@
                     {
                         match: /\$\(TARGET_DESTINATION\)/g,
                         replacement: config.targetName
-                    },
-                    {
-                        match: /\$\(TargetFramework\)/g,
-                        replacement: config.targetFramework
                     },
                     {
                         match: /\$\(build.version\)/g,
@@ -43,13 +43,10 @@
             files: [
               { expand: true, flatten: true, src: [config.desktopOutput + "js/*.js"], dest: config.desktopOutput + "js/" },
               { expand: true, flatten: true, src: [config.desktopOutput + "js/" + config.localeFolder + "/*.js"], dest: config.desktopOutput + "js/" + config.localeFolder + "/" },
-              { expand: true, flatten: true, src: [config.phoneOutput + "js/*.js"], dest: config.phoneOutput + "js/" },
-              { expand: true, flatten: true, src: [config.phoneOutput + "js/" + config.localeFolder + "/*.js"], dest: config.phoneOutput + "js/" + config.localeFolder + "/" },
               { expand: true, flatten: true, src: [config.desktopOutput + "css/*.css"], dest: config.desktopOutput + "css/" },
-              { expand: true, flatten: true, src: [config.phoneOutput + "css/*.css"], dest: config.phoneOutput + "css/" },
-              { expand: true, flatten: false, src: [config.testsOutput + "**"], dest: "" },
+              { expand: true, flatten: false, src: [config.modulesOutput + "**/*.js"], dest: "" },
             ]
-        }
+        },
     };
 
     if (config.inRazzle) {

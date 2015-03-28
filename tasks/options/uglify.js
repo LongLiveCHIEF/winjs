@@ -1,24 +1,16 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
 
-(function() {
+(function () {
     "use strict";
     var config = require("../../config.js");
     module.exports = {
-        baseDesktop: {
-            src: [config.desktopOutput + "js/base.js"],
-            dest: config.desktopOutput + "js/base.min.js"
+        options: {
+            sourceMap: true,
+            banner: config.copyright
         },
-        basePhone: {
-            src: [config.phoneOutput + "js/base.js"],
-            dest: config.phoneOutput + "js/base.min.js"
-        },
-        uiDesktop: {
-            src: [config.desktopOutput + "js/ui.js"],
-            dest: config.desktopOutput + "js/ui.min.js"
-        },
-        uiPhone: {
-            src: [config.phoneOutput + "js/ui.js"],
-            dest: config.phoneOutput + "js/ui.min.js"
+        singleFile: {
+            src: [config.desktopOutput + "js/WinJS.js"],
+            dest: config.desktopOutput + "js/WinJS.min.js"
         }
     };
 })();

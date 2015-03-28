@@ -1,19 +1,22 @@
-﻿// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+﻿// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
+
+@import "base.less";
+
 .win-tooltip {
     display: block;
     position: fixed;
     top: 30px;
     left: 30px;
-    max-width: 380px;
+    max-width: 320px;
     box-sizing: border-box;
     margin: 0;
-    padding: 6px 10px 7px 10px;
+    padding: 4px 7px 6px 7px; // Minus 1px for border
     border-style: solid;
-    border-width: 2px;
+    border-width: 1px;
     z-index: 9999;
     word-wrap: break-word;
     animation-fill-mode: both;
-    .win-type-xx-small-internal();
+    .win-type-caption();
 }
 
 .win-tooltip-phantom {

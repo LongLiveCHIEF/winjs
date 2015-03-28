@@ -3,13 +3,20 @@
 (function () {
     var qUnitGlobalErrorHandler = window.onerror;
 
+    var testTimeout = QUnit.urlParams.testtimeout ? QUnit.urlParams.testtimeout : 15000;
+    var startTime = -1;
+    var hasRun = false;
     var testFailed = false;
-    var testError = "";
+    var testError = null;
     var verboseLog = "";
     var log = [];
 
+    var socketId = document.title;
+    var socketSignal = null;
+
     QUnit.config.autostart = false;
-    QUnit.config.testTimeout = 30000;
+    QUnit.config.testTimeout = testTimeout;
+    QUnit.config.hidepassed = true;
     QUnit.breakOnAssertFail = false;
 
     var qunitDiv;
@@ -19,40 +26,119 @@
         qunitTestFixtureDiv = document.querySelector("#qunit-fixture");
 
         function addOptions() {
+            function createOption(id, label, initiallyChecked) {
+                var cb = document.createElement("input");
+                cb.type = "checkbox";
+                cb.id = id;
+                cb.checked = initiallyChecked;
+                var span = document.createElement("span");
+                span.innerHTML = label;
+                toolBar.appendChild(cb);
+                toolBar.appendChild(span);
+            }
+
             var toolBar = document.querySelector("#qunit-testrunner-toolbar");
             if (!toolBar) {
                 setTimeout(addOptions);
                 return;
             }
 
-            var cb = document.createElement("input");
-            cb.type = "checkbox";
-            cb.onchange = function () {
-                QUnit.breakOnAssertFail = cb.checked;
-            };
-            var span = document.createElement("span");
-            span.innerHTML = "Break on Assert fail";
-            toolBar.appendChild(cb);
-            toolBar.appendChild(span);
+            createOption("breakOnAssertFail", "Break on Assert fail", QUnit.urlParams.breakonassertfail === "true" || QUnit.urlParams.breakonassertfail === true);
+            createOption("disableTestTimeout", "Disable test timeout", QUnit.urlParams.disabletesttimeout === "true" || QUnit.urlParams.disabletesttimeout === true);
+            createOption("fastAnimations", "Fast Animations", QUnit.urlParams.fastanimations === "true" || QUnit.urlParams.fastanimations === true);
+            createOption("loopTests", "Loop Tests", QUnit.urlParams.loop === "true" || QUnit.urlParams.loop === true);
 
             var btn = document.createElement("button");
+            btn.id = "startButton";
             btn.style.borderColor = btn.style.color = "#5E740B";
             btn.style.marginLeft = "4px";
             btn.innerHTML = "Start";
             btn.onclick = function () {
-                QUnit.start();
+                // Changing the fast animations setting requires a re-load.
+                if (!hasRun && (WinJS.Utilities._fastAnimations === document.querySelector("#fastAnimations").checked)) {
+                    start();
+                } else {
+                    var qs = "?breakonassertfail=" + document.querySelector("#breakOnAssertFail").checked;
+                    qs += "&disabletesttimeout=" + document.querySelector("#disableTestTimeout").checked;
+                    qs += "&fastanimations=" + document.querySelector("#fastAnimations").checked;
+                    qs += "&loop=" + document.querySelector("#loopTests").checked;
+                    qs += "&autostart=true";
+                    if (QUnit.urlParams.module) {
+                        qs += "&module=" + QUnit.urlParams.module;
+                    }
+                    if (QUnit.urlParams.testNumber) {
+                        qs += "&testNumber=" + QUnit.urlParams.testNumber;
+                    }
+                    window.location = window.location.protocol + "//" + window.location.host + window.location.pathname + qs;
+                }
             };
             toolBar.appendChild(btn);
 
-            if (document.location.search.substr(1, 10) === "autostart") {
-                btn.click();
+            if (QUnit.urlParams.autostart === "true" || QUnit.urlParams.autostart === true) {
+                start();
             }
         }
         addOptions();
+
+        if (QUnit.urlParams.subscriptionKey) {
+            var socket = null;
+            var socketReady = false;
+            var listeners = [];
+            socketSignal = function (callback) {
+                if (socketReady) {
+                    callback(socket);
+                } else {
+                    listeners.push(callback);
+                }
+            };
+
+            var attempts = 0;
+            setTimeout(function connect() {
+                try {
+                    socket = new WebSocket("ws://localhost:9998");
+                    socket.onopen = function () {
+                        socket.send(JSON.stringify({ id: socketId, type: "registerReporter", args: { subscriptionKey: QUnit.urlParams.subscriptionKey } }));
+                        listeners.forEach(function (listener) {
+                            listener(socket);
+                        });
+                        socketReady = true;
+                    };
+                    socket.onclose = function (m) {
+                        setTimeout(window.close, 500);
+                    }
+                    attempts++;
+                } catch (e) {
+                    // new WebSocket() can throw a security exception when there are too many connections
+                    // going out at once; since the dashboard launches 4+ test pages at once, we may see
+                    // some of these.
+                    if (attempts < 5) {
+                        setTimeout(connect, 500);
+                    }
+                }
+            }, 500);
+        }
     });
 
+    if (QUnit.urlParams.fastanimations === "true" || QUnit.urlParams.fastanimations === true) {
+        WinJS.Utilities._fastAnimations = true;
+    }
+
+    function start() {
+        hasRun = true;
+        QUnit.breakOnAssertFail = document.querySelector("#breakOnAssertFail").checked;
+        QUnit.config.testTimeout = document.querySelector("#disableTestTimeout").checked ? undefined : testTimeout;
+        QUnit.config.started = +new Date(); // This is a temporary fix and can be removed when and if jquery/qunit#555 is accepted.
+        QUnit.start();
+    }
+
     function completeTest() {
-        QUnit.assert.ok(!testFailed, testError);
+        // Since we want one assert per test, if this test times out, then we do not
+        // call asserts because the timeout itself is a failed assert.
+        if (Date.now() - startTime < testTimeout || typeof QUnit.config.testTimeout === 'undefined') {
+            QUnit.assert.ok(!testFailed, testError && testError.message);
+        } else {
+            verboseLog = "Test timeout - " + verboseLog;
+        }
         QUnit.start();
     }
 
@@ -93,33 +179,67 @@
         }
     }
 
-    function cleanUp(testName) {
+    function cleanUp() {
         testFailed = false;
-        testError = "";
+        testError = null;
         verboseLog = "";
 
         qunitDiv.style.zIndex = 0;
     }
 
+    function AllObjectKeys(obj) {
+        var keys = Object.keys(obj);
+        var proto = Object.getPrototypeOf(obj);
+        if(proto) {
+            var protoKeys = AllObjectKeys(proto);
+            return keys.concat(protoKeys);
+        }
+
+        return keys;
+    }
+
     QUnit.testStart(function testStart(testDetails) {
         qunitDiv.style.zIndex = -1;
-        QUnit.log = function (details) {
-            if (!details.result) {
-                details.name = testDetails.name;
-                log.push(details);
-            }
+    });
+
+    QUnit.log(function (details) {
+        if (!details.result) {
+            testError = testError || {};
+            testError.source = details.source;
         }
     });
 
-    QUnit.testDone(function testDone(args) {
-        if (args.failed) {
-            console.log(args.module + ": " + args.name + ", " + args.passed + "/" + args.total + ", " + args.runtime + "ms");
+    QUnit.testDone(function testDone(test) {
+        if (test.failed) {
+            console.log(test.module + ": " + test.name + " failed, " + test.runtime + "ms");
             console.log(verboseLog);
+            log.push({
+                name: test.name,
+                result: !!test.failed,
+                expected: testError.expected,
+                actual: testError.actual,
+                // Omit all but the first few callstacks to keep our results data small.
+                // If it's larger than 64 KB, Saucelabs will ignore it.
+                source: (log.length < 3 && testError.source) ? testError.source.substr(0, 500) : null
+            });
+            socketSignal && socketSignal(function (socket) {
+                socket.send(JSON.stringify({
+                    id: socketId,
+                    type: "report",
+                    args: {
+                        data: {
+                            type: "singleFailure",
+                            name: test.name,
+                            number: QUnit.config.current.testNumber
+                        }
+                    }
+                }));
+            });
         }
-        cleanUp(args.name);
+        cleanUp();
     });
 
-    QUnit.moduleDone(function (args) {
+    QUnit.moduleDone(function (module) {
         if (document.body.children.length > 2) {
             for (var i = document.body.children.length - 1; i >= 0; i--) {
                 var child = document.body.children[i];
@@ -127,35 +247,47 @@
                     continue;
                 }
 
-                console.log("Test: " + args.name + " - Incomplete cleanup!");
+                console.log("Test: " + module.name + " - Incomplete cleanup!");
                 WinJS.Utilities.disposeSubTree(child);
                 document.body.removeChild(child);
             }
         }
     });
 
-    QUnit.done(function (test_results) {
-        var tests = log.map(function (details) {
-            return {
-                name: details.name,
-                result: details.result,
-                expected: details.expected,
-                actual: details.actual,
-                source: details.source
+    QUnit.done(function (results) {
+        if (document.querySelector("#loopTests").checked) {
+            if (!log.length) {
+                document.querySelector("#startButton").click();
             }
-        });
-        test_results.tests = tests;
+        } else {
+            results.tests = log;
+            results.url = document.location.href;
+            window.global_test_results = results;
 
-        window.global_test_results = test_results;
+            socketSignal && socketSignal(function (socket) {
+                socket.send(JSON.stringify({
+                    id: socketId,
+                    type: "report",
+                    args: {
+                        data: {
+                            type: "finished",
+                            runtime: results.runtime,
+                            failures: log.length
+                        }
+                    }
+                }));
+                socket.close();
+            });
+        }
     });
 
     function formatString(string) {
         var args = arguments;
         if (args.length > 1) {
-            string = string.replace(/({{)|(}})|{(\d+)}|({)|(})/g, 
+            string = string.replace(/({{)|(}})|{(\d+)}|({)|(})/g,
                 function (unused, left, right, index, illegalLeft, illegalRight) {
-                    if (illegalLeft || illegalRight) { 
-                        throw new Error(formatString("Malformed string input: {0}", illegalLeft || illegalRight)); 
+                    if (illegalLeft || illegalRight) {
+                        throw new Error(formatString("Malformed string input: {0}", illegalLeft || illegalRight));
                     }
                     return (left && "{") || (right && "}") || args[(index | 0) + 1];
                 });
@@ -170,7 +302,11 @@
                     if (QUnit.breakOnAssertFail) {
                         debugger;
                     }
-                    testError = testError || formatString("areEqual - {0} (expected: {1}, actual: {2})", message || "", expected, actual);
+                    testError = testError || {
+                        message: formatString("areEqual - {0} (expected: {1}, actual: {2})", message || "", expected, actual),
+                        expected: expected,
+                        actual: actual
+                    };
                     testFailed = true;
                 }
             },
@@ -180,7 +316,11 @@
                     if (QUnit.breakOnAssertFail) {
                         debugger;
                     }
-                    testError = testError || formatString("areNotEqual - {0} (both equal: {1})", message || "", left);
+                    testError = testError || {
+                        message: formatString("areNotEqual - {0} (both equal: {1})", message || "", left),
+                        expected: left,
+                        actual: right
+                    };
                     testFailed = true;
                 }
             },
@@ -189,7 +329,11 @@
                 if (QUnit.breakOnAssertFail) {
                     debugger;
                 }
-                testError = testError || formatString("fail - {0}", message || "");
+                testError = testError || {
+                    message: formatString("fail - {0}", message || ""),
+                    expected: "pass",
+                    actual: "fail"
+                };
                 testFailed = true;
             },
 
@@ -198,7 +342,11 @@
                     if (QUnit.breakOnAssertFail) {
                         debugger;
                     }
-                    testError = testError || formatString("isFalse - {0} (expected: falsy, actual: {1})", message || "", falsy);
+                    testError = testError || {
+                        message: formatString("isFalse - {0} (expected: falsy, actual: {1})", message || "", falsy),
+                        expected: "falsy",
+                        actual: falsy
+                    };
                     testFailed = true;
                 }
             },
@@ -208,7 +356,11 @@
                     if (QUnit.breakOnAssertFail) {
                         debugger;
                     }
-                    testError = testError || formatString("isTrue - {0} (expected: truthy, actual: {1})", message || "", truthy);
+                    testError = testError || {
+                        message: formatString("isTrue - {0} (expected: truthy, actual: {1})", message || "", truthy),
+                        expected: "truthy",
+                        actual: truthy
+                    };
                     testFailed = true;
                 }
             },
@@ -220,7 +372,11 @@
                     if (QUnit.breakOnAssertFail) {
                         debugger;
                     }
-                    testError = testError || formatString("isNull - {0} (expected: null or undefined, actual: {1})", message || "", obj);
+                    testError = testError || {
+                        message: formatString("isNull - {0} (expected: null or undefined, actual: {1})", message || "", obj),
+                        expected: "null",
+                        actual: obj
+                    };
                     testFailed = true;
                 }
             },
@@ -232,7 +388,11 @@
                     if (QUnit.breakOnAssertFail) {
                         debugger;
                     }
-                    testError = testError || formatString("isNotNull - {0} (expected: not null and not undefined, actual: {1})", message || "", obj);
+                    testError = testError || {
+                        message: formatString("isNotNull - {0} (expected: not null and not undefined, actual: {1})", message || "", obj),
+                        expected: "not null",
+                        actual: obj
+                    };
                     testFailed = true;
                 }
             },
@@ -245,7 +405,11 @@
         LoggingCore: {
             logComment: function (message) {
                 verboseLog += "\n" + message;
-            }
+            },
+
+            getVerboseLog: function () {
+                return verboseLog;
+            },
         },
 
         registerTestClass: function (moduleName) {
@@ -282,7 +446,7 @@
                 }
             });
 
-            Object.keys(testModule).forEach(function (key) {
+            AllObjectKeys(testModule).forEach(function (key) {
                 if (key.indexOf("test") !== 0) {
                     return;
                 }
@@ -292,6 +456,7 @@
                 if (testFunc.length) {
                     // Async WebUnit tests take a 'complete' parameter
                     QUnit.asyncTest(testName, function () {
+                        startTime = Date.now();
                         hookupGlobalErrorHandler(testFunc);
                         var error = false;
                         try {
@@ -308,6 +473,7 @@
                     });
                 } else {
                     QUnit.asyncTest(testName, function () {
+                        startTime = Date.now();
                         hookupGlobalErrorHandler(testFunc);
                         try {
                             testFunc.call(testModule);

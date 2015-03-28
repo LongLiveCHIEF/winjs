@@ -1,9 +1,11 @@
-// Copyright (c) Microsoft Open Technologies, Inc.  All Rights Reserved. Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+// Copyright (c) Microsoft Corporation.  All Rights Reserved. Licensed under the MIT License. See License.txt in the project root for license information.
 (function () {
     "use strict";
 
     var chalk = require("chalk");
     var table = require("text-table");
+    var config = require("../../config.js");
+    var grunt = config.grunt;
 
     module.exports = {
         reporter: function (results) {
@@ -22,11 +24,11 @@
 
             results.forEach(function (line) {
                 if (tableHeader !== line.file) {
-                    
+
                     // Finish prev table.
                     if (tableRows !== []) {
                         appendTableRows();
-                        tableRows = []
+                        tableRows = [];
                     }
 
                     // Begin new table.
@@ -50,6 +52,10 @@
             if (str) {
                 console.log(str + "\n\n " + chalk.red(chalk.bold(len + " lint error" +
                   ((len === 1) ? "" : "s") + "\n")));
+            }
+
+            if (len > 0) {
+                grunt.fail.warn(len + " lint error" + ((len === 1) ? "" : "s"));
             }
         }
 
